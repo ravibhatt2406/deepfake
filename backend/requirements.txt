@@ -1,0 +1,57 @@
+# ── requirements.txt ──────────────────────────────────────────────────────────
+# TruthScan Backend v2.0 — Production Dependencies
+# Pin major versions for reproducibility; minor/patch float for security patches
+
+# ── Web Framework ─────────────────────────────────────────────────────────────
+fastapi>=0.111.0,<0.120.0
+uvicorn[standard]>=0.29.0,<0.32.0
+python-multipart>=0.0.9
+pydantic>=2.7.0,<3.0.0
+pydantic-settings>=2.3.0,<3.0.0
+
+# ── HTTP Client ───────────────────────────────────────────────────────────────
+httpx[http2]>=0.27.0,<0.29.0
+aiofiles>=23.0.0
+
+# ── Cache ─────────────────────────────────────────────────────────────────────
+redis[asyncio]>=5.0.0,<6.0.0
+
+# ── Deep Learning ─────────────────────────────────────────────────────────────
+torch>=2.3.0            # PyTorch — GPU support auto-detected
+torchvision>=0.18.0
+timm>=1.0.0             # Model zoo (EfficientNet, Xception, ViT etc.)
+transformers>=4.41.0    # CLIP, BERT etc.
+sentence-transformers>=3.0.0  # Semantic embeddings for RAG
+onnxruntime>=1.18.0     # Fast CPU inference
+onnx>=1.16.0            # ONNX export / inspection
+
+# ── Computer Vision ───────────────────────────────────────────────────────────
+Pillow>=10.3.0
+opencv-python-headless>=4.9.0  # Video processing (headless = no GUI deps)
+numpy>=1.26.0,<2.0.0    # Pin <2.0 for compat
+
+# ── NLP & Text Processing ─────────────────────────────────────────────────────
+scipy>=1.13.0            # DCT, FFT for frequency analysis
+beautifulsoup4>=4.12.0   # URL scraping
+lxml>=5.0.0              # Fast HTML parser
+
+# ── Document Parsing ──────────────────────────────────────────────────────────
+pdfplumber>=0.11.0       # PDF text extraction
+python-docx>=1.1.0       # DOCX extraction
+python-pptx>=0.6.23      # PPTX extraction
+pytesseract>=0.3.10      # OCR for images (requires tesseract binary)
+
+# ── Vector Database ───────────────────────────────────────────────────────────
+chromadb>=0.5.0          # Local vector DB (zero-config)
+# pinecone-client>=4.0.0  # Uncomment for cloud vector DB
+
+# ── Evaluation & Metrics ─────────────────────────────────────────────────────
+scikit-learn>=1.5.0      # ROC-AUC, confusion matrix, calibration
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+
+# ── Monitoring ───────────────────────────────────────────────────────────────
+prometheus-fastapi-instrumentator>=6.1.0  # Metrics endpoint /metrics
+
+# ── Dev only ─────────────────────────────────────────────────────────────────
+# black, isort, mypy, ruff — install in dev environment only
