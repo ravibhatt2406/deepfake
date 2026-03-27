@@ -34,7 +34,7 @@ class AIVoiceDetector:
         final_score = min(score, 100)
         return {
             "aiLikelihood": float(final_score),
-            "syntheticProsodyScore": float(1.0 - (min(pitch_std, 50)/50.0)) if 'active_pitches' in locals() else 0.5,
+            "syntheticProsodyScore": float(1.0 - (min(pitch_std, 50)/50.0)) if 'pitch_std' in locals() else 0.5,
             "phonemeRepetitionScore": float(1.0 - (min(mean_delta, 2.0)/2.0)) if 'mean_delta' in locals() else 0.5,
             "detectedModel": "High-Confidence Synthetic" if final_score > 70 else "None",
             "findings": reasons

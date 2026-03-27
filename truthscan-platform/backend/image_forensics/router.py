@@ -1,31 +1,42 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from shared.schemas import ImageForensicsResponse
 import logging
-from .decision_engine import ImageDecisionEngine
+from .detectors.ela import ELADetector
+from .detectors.metadata import MetadataDetector
+import numpy as np
+from PIL import Image
+import io
 
 router = APIRouter()
 logger = logging.getLogger("truthscan.image.router")
 engine = ImageDecisionEngine()
+ela_detector = ELADetector()
+metadata_detector = MetadataDetector()
 
 @router.post("/analyze", response_model=ImageForensicsResponse)
 async def analyze_image(file: UploadFile = File(...)):
     """
-    Dummy/Mock implementation of image forensics for re-integration.
+    Real implementation of image forensics.
     """
     try:
-        # Real implementation would call ELA, Noise, AI detectors here.
-        # For now, we return a mock response to ensure API compatibility.
-        mock_ai = {"ai_score": 15.0}
-        mock_tamper = {"tamper_score": 10.0}
+        content = await file.read()
+        img = Image.open(io.BytesIO(content)).convert("RGB")
+        image_array = np.asarray(img)
+
+        # 1. Run Detectors
+        ela_res = ela_detector.analyze(image_array)
+        meta_res = metadata_detector.analyze(image_array)
         
-        final = engine.finalize_verdict(mock_ai, mock_tamper)
+        # 2. Finalize Verdict
+        # We also pass a dummy ai_score of 0 for this module, or integrate with ai_detection
+        final = engine.finalize_verdict({"ai_score": 0.0}, ela_res)
         
         return ImageForensicsResponse(
             verdict=final["verdict"],
             confidence_score=final["confidence"],
             detailed_analysis={
-                "ai_detection": mock_ai,
-                "tampering": mock_tamper,
+                "ela": ela_res,
+                "metadata": meta_res,
                 "explanation": final["explanation"]
             }
         )

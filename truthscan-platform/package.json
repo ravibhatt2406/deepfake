@@ -1,0 +1,15 @@
+{
+  "name": "truthscan-platform",
+  "version": "1.0.0",
+  "description": "Unified TruthScan AI Detection & Fact Verification Platform",
+  "main": "index.js",
+  "scripts": {
+    "frontend": "cd frontend && python -m http.server 3000",
+    "backend": "cd backend && uvicorn main:app --host 0.0.0.0 --port 8000 --reload",
+    "dev": "npx concurrently \"npm run frontend\" \"npm run backend\"",
+    "test": "cd backend && pytest"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

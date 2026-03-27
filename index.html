@@ -2604,8 +2604,10 @@ textarea.dna-text-input::placeholder { color:var(--muted); }
 </div>
 
 <script>
-
-
+// API Endpoint Configuration
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+  ? 'http://localhost:8000' 
+  : '';
 
 // ═══════════════════════════════════════════════════
 // TOAST SYSTEM
@@ -2639,7 +2641,7 @@ async function callClaude(system, user, maxTokens, useWebSearch) {
   }
   let resp;
   try {
-    resp = await fetch('/api/v1/proxy/claude', {
+    resp = await fetch(API_BASE + '/api/v1/proxy/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -2669,21 +2671,34 @@ function parseJSON(text) {
 // SPA ROUTING
 // ═══════════════════════════════════════════════════
 function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
+  const p = document.getElementById('page-' + id);
+  if (!p) {
+    console.warn(`Page ${id} not found`);
+    return;
+  }
+  
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  p.classList.add('active');
+  
   document.querySelectorAll('.nav-link').forEach(l => {
     l.classList.remove('active', 'active-red', 'active-gold');
+    l.style.color = '';
+    l.style.borderBottomColor = '';
   });
+  
   const nl = document.getElementById('nl-' + id);
   if (nl) {
     if (id === 'fn') nl.classList.add('active-red');
     else if (id === 'img') nl.classList.add('active-gold');
-    else if (id === 'dna') { nl.classList.add('active'); nl.style.color='var(--accent3)'; nl.style.borderBottomColor='var(--accent3)'; }
-    else if (id === 'audio') { nl.classList.add('active'); nl.style.color='var(--accent3)'; nl.style.borderBottomColor='var(--accent3)'; }
+    else if (id === 'dna' || id === 'audio') { 
+      nl.classList.add('active'); 
+      nl.style.color = 'var(--accent3)'; 
+      nl.style.borderBottomColor = 'var(--accent3)'; 
+    }
     else nl.classList.add('active');
   }
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo(0, 0);
 }
 
 // ═══════════════════════════════════════════════════
@@ -2762,7 +2777,7 @@ async function runScan() {
   else fd.append('file', selectedFile);
 
   try {
-    const resp = await fetch('/api/v1/ai-detection/analyze', { method: 'POST', body: fd });
+    const resp = await fetch(API_BASE + '/api/v1/ai-detection/analyze', { method: 'POST', body: fd });
     if (!resp.ok) throw new Error('Backend unavailable');
     const result = await resp.json();
     clearInterval(t);
@@ -3239,7 +3254,7 @@ async function fnRunAnalysis() {
 
     let result;
     try {
-      const resp = await fetch('/api/v1/fact-check/analyze', { method: 'POST', body: fd });
+      const resp = await fetch(API_BASE + '/api/v1/fact-check/analyze', { method: 'POST', body: fd });
       if (!resp.ok) throw new Error('Backend ' + resp.status);
       result = await resp.json();
     } catch(backendErr) {
@@ -3524,7 +3539,7 @@ async function ioRunAnalysis() {
     
     let result;
     try {
-      const resp = await fetch('/api/v1/image-forensics/analyze', { method: 'POST', body: fd });
+      const resp = await fetch(API_BASE + '/api/v1/image-forensics/analyze', { method: 'POST', body: fd });
       if (!resp.ok) throw new Error('Forensics Backend ' + resp.status);
       result = await resp.json();
     } catch(fetchErr) {
@@ -3909,7 +3924,7 @@ let dnaSelectedFile = null;
 let dnaRunning = false;
 let dnaScanTimer = null;
 
-const DNA_API_BASE = '/api/v1/content-dna';
+const DNA_API_BASE = API_BASE + '/api/v1/content-dna';
 
 function dnaSwitchTab(tab, btn) {
   dnaCurrentTab = tab;
@@ -4270,7 +4285,7 @@ function escHtml(s) {
 // ═══════════════════════════════════════════════════
 // MODULE: AUDIO DETECTOR
 // ═══════════════════════════════════════════════════
-const AUDIO_API_BASE = '/api/v1/audio-forensics';
+const AUDIO_API_BASE = API_BASE + '/api/v1/audio-forensics';
 let audioSelectedFile = null;
 let audioIsAnalyzing = false;
 

@@ -154,47 +154,58 @@ class TextPreprocessor:
     async def text_to_image(text: str) -> np.ndarray:
         """
         Convert text to a 224×224 statistical 'fingerprint' image.
-        Encodes: character n-gram frequencies, word length distribution,
-                 punctuation density, sentence length variance.
-        This allows image-based models to process text features.
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, TextPreprocessor._encode, text)
 
     @staticmethod
     def _encode(text: str) -> np.ndarray:
+        """
+        Statistical encoding of text features into an image.
+        Improved to include linguistic markers.
+        """
         import re
-
         words = text.split()
-        sentences = re.split(r'[.!?]+', text)
-        sentences = [s.strip() for s in sentences if s.strip()]
-
         if not words:
             return np.zeros((224, 224, 3), dtype=np.uint8)
 
-        # Feature extraction
-        word_lengths = [len(w) for w in words]
+        # ── Linguistic Signals ───────────────────────────────────────────────
+        # AI models often over-use certain transition words and have uniform lengths
+        llm_markers = ["moreover", "furthermore", "in conclusion", "it is important to note", "consequently"]
+        marker_count = sum(1 for w in words if w.lower() in llm_markers)
+        marker_density = marker_count / len(words)
+
+        sentences = re.split(r'[.!?]+', text)
+        sentences = [s.strip() for s in sentences if s.strip()]
         sent_lengths = [len(s.split()) for s in sentences] if sentences else [0]
-        char_counts = {}
-        for c in text[:5000]:
-            char_counts[c] = char_counts.get(c, 0) + 1
+        # Uniformity (standard deviation of sentence length)
+        # AI often has lower variation (more robotic structure)
+        std_sent = float(np.std(sent_lengths)) if len(sent_lengths) > 1 else 20.0
+        uniformity_score = 1.0 - min(1.0, std_sent / 30.0)
 
-        # Build a 224×224 image encoding statistical features
+        # ── Feature Map Construction ─────────────────────────────────────────
         img = np.zeros((224, 224, 3), dtype=np.uint8)
+        
+        # Channel 0: Linguistic markers & Uniformity
+        val_m = int(min(1.0, marker_density * 50) * 255)
+        val_u = int(uniformity_score * 255)
+        img[:, :112, 0] = val_m
+        img[:, 112:, 0] = val_u
 
-        # Channel 0: word length histogram
+        # Channel 1: Word length distribution
+        word_lengths = [len(w) for w in words]
         for i, length in enumerate(word_lengths[:224]):
-            val = min(223, max(0, int((length / 20) * 224)))
-            img[i % 224, val, 0] = 200
+            col = min(223, max(0, int((length / 15) * 224)))
+            img[i % 224, col, 1] = 200
 
-        # Channel 1: char frequency heatmap
-        for i, (char, count) in enumerate(sorted(char_counts.items())[:224]):
-            val = min(223, int((count / max(char_counts.values())) * 224))
-            img[val, i % 224, 1] = 180
-
-        # Channel 2: sentence length distribution
-        for i, sl in enumerate(sent_lengths[:224]):
-            val = min(223, max(0, int((sl / 100) * 224)))
-            img[i % 224, val, 2] = 160
+        # Channel 2: Character counts
+        char_counts = {}
+        for c in text[:2000]:
+            char_counts[c] = char_counts.get(c, 0) + 1
+        if char_counts:
+            max_c = max(char_counts.values())
+            for i, (char, count) in enumerate(sorted(char_counts.items())[:224]):
+                row = min(223, int((count / max_c) * 224))
+                img[row, i % 224, 2] = 180
 
         return img
